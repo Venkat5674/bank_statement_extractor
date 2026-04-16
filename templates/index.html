@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BankLens — AI Bank Statement Extractor</title>
+  <meta name="description" content="Upload bank statement PDFs or images and extract structured transaction data instantly using AI-powered dual OCR (EasyOCR + DocTR)." />
+  <meta name="keywords" content="bank statement extractor, OCR, transaction parser, financial document AI" />
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+
+  <link rel="stylesheet" href="/static/css/style.css" />
+</head>
+<body>
+
+  <!-- ═══════════════════════════  HEADER  ═══════════════════════════ -->
+  <header class="site-header">
+    <div class="header-inner">
+      <div class="logo">
+        <span class="logo-icon">
+          <i data-lucide="landmark"></i>
+        </span>
+        <span class="logo-text">Bank<span class="accent">Lens</span></span>
+      </div>
+      <nav class="header-nav">
+        <a href="#upload-section" class="nav-link">Extract</a>
+        <a href="#results-section" class="nav-link">Results</a>
+        <span class="badge-pill">AI Powered</span>
+      </nav>
+    </div>
+  </header>
+
+  <!-- ═══════════════════════════  HERO  ════════════════════════════ -->
+  <section class="hero">
+    <div class="hero-glow hero-glow-1"></div>
+    <div class="hero-glow hero-glow-2"></div>
+    <div class="hero-content">
+      <div class="hero-pill">
+        <span class="pulse-dot"></span>
+        Dual OCR Engine · EasyOCR + DocTR
+      </div>
+      <h1 class="hero-title">
+        Extract Transactions<br/>
+        <span class="gradient-text">From Any Bank Statement</span>
+      </h1>
+      <p class="hero-sub">
+        Upload a PDF or image — our AI parses dates, descriptions, debits,
+        credits and balances into clean, exportable JSON in seconds.
+      </p>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════  UPLOAD SECTION  ════════════════════ -->
+  <main>
+    <section id="upload-section" class="section">
+      <div class="card upload-card">
+        <div class="card-header">
+          <i data-lucide="scan-text"></i>
+          <span>Upload Bank Statement</span>
+        </div>
+
+        <!-- Drop zone -->
+        <div class="drop-zone" id="dropZone" role="button" tabindex="0"
+             aria-label="File upload area – drag and drop or click to browse">
+          <div class="drop-zone-glow"></div>
+          <div class="drop-icon-wrap">
+            <i data-lucide="upload-cloud" class="drop-icon-svg"></i>
+          </div>
+          <p class="drop-primary">Drag &amp; drop your file here</p>
+          <p class="drop-secondary">PDF, PNG, JPG, TIFF, BMP, WEBP · Max 25 MB</p>
+          <label class="btn btn-outline" for="fileInput" id="browseBtn">
+            <i data-lucide="folder-open"></i> Browse Files
+          </label>
+          <input type="file" id="fileInput" accept=".pdf,.png,.jpg,.jpeg,.tiff,.tif,.bmp,.webp" hidden />
+        </div>
+
+        <!-- Selected file info -->
+        <div class="file-info" id="fileInfo" hidden>
+          <div class="file-info-inner">
+            <i data-lucide="file-text" class="file-icon"></i>
+            <div class="file-details">
+              <span class="file-name" id="fileName"></span>
+              <span class="file-size" id="fileSize"></span>
+            </div>
+            <button class="btn-icon" id="clearFile" aria-label="Remove file">
+              <i data-lucide="x"></i>
+            </button>
+          </div>
+        </div>
+
+        <button class="btn btn-primary" id="extractBtn" disabled>
+          <i data-lucide="cpu"></i>
+          Extract Transactions
+        </button>
+      </div>
+    </section>
+
+    <!-- ═══════════════════  PROGRESS SECTION  ═══════════════════ -->
+    <section id="progress-section" class="section" hidden>
+      <div class="card progress-card">
+        <div class="card-header">
+          <i data-lucide="loader-circle" class="spin"></i>
+          <span>Processing</span>
+        </div>
+        <div class="progress-steps" id="progressSteps">
+          <div class="step" id="step-upload">
+            <div class="step-icon"><i data-lucide="upload"></i></div>
+            <div class="step-info">
+              <p class="step-label">Uploading file</p>
+              <p class="step-sub" id="stepFilename"></p>
+            </div>
+            <div class="step-badge pending" id="badge-upload">waiting</div>
+          </div>
+          <div class="step-connector"></div>
+          <div class="step" id="step-ocr">
+            <div class="step-icon"><i data-lucide="eye"></i></div>
+            <div class="step-info">
+              <p class="step-label">Running OCR engines</p>
+              <p class="step-sub">EasyOCR + DocTR dual pass</p>
+            </div>
+            <div class="step-badge pending" id="badge-ocr">waiting</div>
+          </div>
+          <div class="step-connector"></div>
+          <div class="step" id="step-parse">
+            <div class="step-icon"><i data-lucide="table-2"></i></div>
+            <div class="step-info">
+              <p class="step-label">Parsing transactions</p>
+              <p class="step-sub">Date, amount, description extraction</p>
+            </div>
+            <div class="step-badge pending" id="badge-parse">waiting</div>
+          </div>
+        </div>
+
+        <div class="progress-bar-wrap">
+          <div class="progress-bar" id="progressBar" style="width:0%"></div>
+        </div>
+        <p class="progress-label" id="progressLabel">Queued…</p>
+      </div>
+    </section>
+
+    <!-- ════════════════════  RESULTS SECTION  ════════════════════ -->
+    <section id="results-section" class="section" hidden>
+
+      <!-- Stats row -->
+      <div class="stats-row" id="statsRow">
+        <div class="stat-card" id="stat-total">
+          <i data-lucide="list-ordered"></i>
+          <div>
+            <span class="stat-value" id="statTotal">—</span>
+            <span class="stat-label">Transactions</span>
+          </div>
+        </div>
+        <div class="stat-card debit" id="stat-debit">
+          <i data-lucide="arrow-up-right"></i>
+          <div>
+            <span class="stat-value" id="statDebit">—</span>
+            <span class="stat-label">Total Debits</span>
+          </div>
+        </div>
+        <div class="stat-card credit" id="stat-credit">
+          <i data-lucide="arrow-down-left"></i>
+          <div>
+            <span class="stat-value" id="statCredit">—</span>
+            <span class="stat-label">Total Credits</span>
+          </div>
+        </div>
+        <div class="stat-card balance" id="stat-balance">
+          <i data-lucide="wallet"></i>
+          <div>
+            <span class="stat-value" id="statBalance">—</span>
+            <span class="stat-label">Closing Balance</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Table controls -->
+      <div class="card table-card">
+        <div class="table-controls">
+          <div class="search-wrap">
+            <i data-lucide="search" class="search-icon"></i>
+            <input type="text" id="searchInput" class="search-input"
+                   placeholder="Search descriptions…" aria-label="Search transactions" />
+          </div>
+          <div class="filter-wrap">
+            <select id="typeFilter" class="filter-select" aria-label="Filter by type">
+              <option value="all">All types</option>
+              <option value="debit">Debits only</option>
+              <option value="credit">Credits only</option>
+            </select>
+          </div>
+          <div class="export-wrap">
+            <button class="btn btn-sm" id="exportJson">
+              <i data-lucide="braces"></i> JSON
+            </button>
+            <button class="btn btn-sm" id="exportCsv">
+              <i data-lucide="table"></i> CSV
+            </button>
+            <button class="btn btn-sm btn-secondary" id="newUpload">
+              <i data-lucide="refresh-cw"></i> New
+            </button>
+          </div>
+        </div>
+
+        <!-- Transactions table -->
+        <div class="table-scroll" role="region" aria-label="Transactions table">
+          <table id="txTable" class="tx-table">
+            <thead>
+              <tr>
+                <th data-col="date" class="sortable" aria-sort="none">
+                  Date <i data-lucide="chevrons-up-down" class="sort-icon"></i>
+                </th>
+                <th data-col="description">Description</th>
+                <th data-col="debit" class="sortable num-col" aria-sort="none">
+                  Debit <i data-lucide="chevrons-up-down" class="sort-icon"></i>
+                </th>
+                <th data-col="credit" class="sortable num-col" aria-sort="none">
+                  Credit <i data-lucide="chevrons-up-down" class="sort-icon"></i>
+                </th>
+                <th data-col="balance" class="sortable num-col" aria-sort="none">
+                  Balance <i data-lucide="chevrons-up-down" class="sort-icon"></i>
+                </th>
+              </tr>
+            </thead>
+            <tbody id="txBody"></tbody>
+          </table>
+          <div class="table-empty" id="tableEmpty" hidden>
+            <i data-lucide="inbox"></i>
+            <p>No transactions found.</p>
+          </div>
+        </div>
+
+        <div class="table-footer" id="tableFooter">
+          Showing <span id="rowCount">0</span> transactions
+        </div>
+      </div>
+
+      <!-- Raw JSON viewer -->
+      <div class="card json-card">
+        <div class="json-header" id="jsonToggle" role="button" tabindex="0">
+          <span><i data-lucide="braces"></i> Raw JSON Output</span>
+          <i data-lucide="chevron-down" id="jsonChevron"></i>
+        </div>
+        <pre class="json-body" id="jsonBody" hidden></pre>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════  ERROR TOAST  ═════════════════════ -->
+    <div class="toast" id="errorToast" role="alert" aria-live="assertive">
+      <i data-lucide="circle-x"></i>
+      <span id="toastMsg"></span>
+      <button class="toast-close" id="toastClose"><i data-lucide="x"></i></button>
+    </div>
+  </main>
+
+  <!-- ════════════════════════  FOOTER  ════════════════════════════ -->
+  <footer class="site-footer">
+    <p>BankLens &copy; 2025 &nbsp;·&nbsp; Powered by EasyOCR &amp; DocTR &nbsp;·&nbsp; Flask Backend</p>
+  </footer>
+
+  <script src="/static/js/main.js"></script>
+  <script>
+    // Initialise Lucide icons after DOM/script load
+    lucide.createIcons();
+  </script>
+</body>
+</html>
