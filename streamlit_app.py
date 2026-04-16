@@ -96,7 +96,7 @@ if uploaded_file is not None:
                 full_text = "\n".join([row_text(r) for r in rows])
                 
                 # Call OpenRouter API using deepseek-chat
-                api_key = "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"
+                api_key = ""
                 headers = {
                     "Authorization": f"Bearer {api_key}",
                     "Content-Type": "application/json"
